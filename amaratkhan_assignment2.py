@@ -27,7 +27,7 @@ if __name__ == "__main__":
     for iteration in range(50):
         # generate matrix with random values in the range (-10,10)
         # 10 classes (rows) by 100 instances (columns)
-        array = 10*np.random.uniform(-1,1, (10,10))
+        array = 10*np.random.uniform(-1,1, (10,100))
 
         transposed = array.T # transpose array for accessing each column
 
