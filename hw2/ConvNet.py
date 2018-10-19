@@ -184,28 +184,21 @@ class Net(nn.Module):
             nn.ReLU(inplace=True),
             
             nn.MaxPool2d(kernel_size=2, stride=2),
-            
-            nn.Dropout(0.25),
-            
+                        
             nn.Conv2d(64, 128, kernel_size=3, padding=1),
             nn.ReLU(inplace=True),
-            
+
             nn.MaxPool2d(kernel_size=2, stride=2),
             
             nn.Conv2d(128, 128, kernel_size=3, padding=1),
             nn.ReLU(inplace=True),
-            
+
             nn.MaxPool2d(kernel_size=2, stride=2),
-            
-            nn.Dropout(0.25),
         )
         
         self.classifier = nn.Sequential(
-            nn.Linear(2048, 1024),
-            nn.ReLU(inplace=True),
             nn.Dropout(),
-            nn.Linear(1024, num_classes),
-            nn.Softmax()
+            nn.Linear(2048, num_classes),
         )
         
         
@@ -234,12 +227,16 @@ optimizer = optim.Adam(net.parameters(), lr=0.001)
 # In[ ]:
 
 
-epochs = 250
+epochs = 50
 
 training_losses = []
 validation_losses = []
-correct = 0
-total = 0
+training_accuracy = []
+validation_accuracy = []
+training_correct = 0
+training_total = 0
+validation_correct = 0
+validation_total = 0
 
 for epoch in range(epochs):  # loop over the dataset multiple times
 
@@ -259,8 +256,14 @@ for epoch in range(epochs):  # loop over the dataset multiple times
         loss.backward()
         optimizer.step()
 
+        _, predicted = torch.max(outputs.data, 1)
+        training_total += labels.size(0)
+        training_correct += (predicted == labels).sum().item()
+
         training_loss += loss.item()
     training_losses.append(training_loss)
+
+    
         
     validation_loss = 0.0
     for i, data in enumerate(validation_loader, 0):
@@ -274,20 +277,37 @@ for epoch in range(epochs):  # loop over the dataset multiple times
             outputs = outputs.cuda()
         loss = criterion(outputs, labels)
         _, predicted = torch.max(outputs.data, 1)
-        total += labels.size(0)
-        correct += (predicted == labels).sum().item()
+        validation_total += labels.size(0)
+        validation_correct += (predicted == labels).sum().item()
         
         validation_loss += loss.item()
     validation_losses.append(validation_loss)
     
-    print('epoch %d/%d \t training loss: %.3f \t validation_loss: %.3f \t accuracy: %d%%' %
-              (epoch + 1, epochs, training_loss, validation_loss, 100 * correct / total))
+    print('epoch %d/%d \t training loss: %.3f \t training_accuracy: %d%% validation_loss: %.3f \t validation_accuracy: %d%%' %
+              (epoch + 1, epochs, training_loss, 100 * training_correct / training_total, validation_loss, 100 * validation_correct / validation_total))
+
+    training_accuracy.append(100 * training_correct / training_total)
+    validation_accuracy.append(100 * validation_correct / validation_total)
 
 print('Finished Training')
 
-torch.save(net, 'ConvNet.pt')
+torch.save(net.state_dict(), 'ConvNet.pt')
 print("Saved model in ConvNet.pt")
 
+
+# In[ ]:
+
+plt.plot(list(range(epochs)), training_losses, label='training')
+plt.plot(list(range(epochs)), validation_losses, label='validation')
+plt.title("Loss")
+plt.legend()
+plt.show()
+
+plt.plot(list(range(epochs)), training_accuracy, label='training')
+plt.plot(list(range(epochs)), validation_accuracy, label='validation')
+plt.title("Accuracy")
+plt.legend()
+plt.show()
 
 # In[ ]:
 
@@ -326,14 +346,4 @@ with torch.no_grad():
 print('Accuracy of the network on the %d test images: %d %%' % (total,
     100 * correct / total))
 
-
-# In[ ]:
-
-# print(training_losses)
-# print(validation_losses)
-
-plt.plot(list(range(epochs)), training_losses, label='training')
-plt.plot(list(range(epochs)), validation_losses, label='validation')
-plt.legend()
-plt.show()
 

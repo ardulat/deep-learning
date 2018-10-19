@@ -183,9 +183,6 @@ class SimpleNet(nn.Module):
             nn.Conv2d(64, 128, kernel_size=3, padding=1),
             nn.BatchNorm2d(128),
             nn.PReLU(),
-            nn.Conv2d(128, 128, kernel_size=3, padding=1),
-            nn.BatchNorm2d(128),
-            nn.PReLU(),
             
             nn.MaxPool2d(kernel_size=2, stride=2),
             
