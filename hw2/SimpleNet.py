@@ -133,7 +133,7 @@ class CIFAR10(torch.utils.data.dataset.Dataset):
 
 train_dir_path1 = 'hw2 data/data1/train/'
 train_dir_path2 = 'hw2 data/data2/train/'
-batch_size = 4
+batch_size = 64
 
 transform = transforms.Compose(
     [transforms.ToTensor(),
@@ -171,10 +171,9 @@ torch.cuda.empty_cache()
 
 # In[11]:
 
-
-class Net(nn.Module):
+class SimpleNet(nn.Module):
     def __init__(self, num_classes=10):
-        super(Net, self).__init__()
+        super(SimpleNet, self).__init__()
         
         self.features = nn.Sequential(
             nn.Conv2d(3, 64, kernel_size=3, padding=1),
@@ -247,13 +246,13 @@ class Net(nn.Module):
     
 
 
-net = Net()
+net = SimpleNet()
 if torch.cuda.is_available():
     print("Running on GPU")
     net = net.cuda()
 
 
-# In[12]:
+# In[ ]:
 
 
 criterion = nn.CrossEntropyLoss()
@@ -263,10 +262,12 @@ optimizer = optim.Adam(net.parameters(), lr=0.001)
 # In[ ]:
 
 
-epochs = 20
+epochs = 50
 
 training_losses = []
 validation_losses = []
+correct = 0
+total = 0
 
 for epoch in range(epochs):  # loop over the dataset multiple times
 
@@ -287,7 +288,7 @@ for epoch in range(epochs):  # loop over the dataset multiple times
         optimizer.step()
 
         training_loss += loss.item()
-    training_losses.append(training_losses)
+    training_losses.append(training_loss)
         
     validation_loss = 0.0
     for i, data in enumerate(validation_loader, 0):
@@ -300,16 +301,19 @@ for epoch in range(epochs):  # loop over the dataset multiple times
         if torch.cuda.is_available():
             outputs = outputs.cuda()
         loss = criterion(outputs, labels)
+        _, predicted = torch.max(outputs.data, 1)
+        total += labels.size(0)
+        correct += (predicted == labels).sum().item()
         
         validation_loss += loss.item()
     validation_losses.append(validation_loss)
     
-    print('epoch %d/%d \t training loss: %.3f \t validation_loss: %.3f' %
-              (epoch + 1, epochs, training_loss, validation_loss))
+    print('epoch %d/%d \t training loss: %.3f \t validation_loss: %.3f \t accuracy: %d%%' %
+              (epoch + 1, epochs, training_loss, validation_loss, 100 * correct / total))
 
 print('Finished Training')
 
-torch.save(net, 'SimpleNet.pt')
+torch.save(net.state_dict(), 'SimpleNet.pt')
 print("Saved model in SimpleNet.pt")
 
 
@@ -330,7 +334,8 @@ test_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, shuffl
 correct = 0
 total = 0
 
-net = torch.load('SimpleNet.pt')
+net = SimpleNet()
+net.load_state_dict(torch.load('SimpleNet.pt'))
 
 with torch.no_grad():
     for data in test_loader:
@@ -349,11 +354,8 @@ print('Accuracy of the network on the %d test images: %d %%' % (total,
 
 # In[ ]:
 
-
 plt.plot(list(range(epochs)), training_losses, label='training')
 plt.plot(list(range(epochs)), validation_losses, label='validation')
 plt.legend()
 plt.show()
 
-
-# net = torch.load('SimpleNet.pt')

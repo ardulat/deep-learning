@@ -274,8 +274,8 @@ for epoch in range(epochs):  # loop over the dataset multiple times
 
 print('Finished Training')
 
-torch.save(net, 'ConvNet.pt')
-print("Saved model in ConvNet.pt")
+torch.save(net.state_dict(), 'VGGNet.pt')
+print("Saved model in VGGNet.pt")
 
 
 # In[ ]:
@@ -295,7 +295,10 @@ test_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, shuffl
 correct = 0
 total = 0
 
-net = torch.load('ConvNet.pt')
+
+net = VGG()
+net.load_state_dict(torch.load('VGGNet.pt'))
+
 
 with torch.no_grad():
     for data in test_loader:

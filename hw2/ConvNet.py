@@ -306,7 +306,8 @@ test_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, shuffl
 correct = 0
 total = 0
 
-net = torch.load('ConvNet.pt')
+net = Net()
+net.load_state_dict(torch.load('ConvNet.pt'))
 
 with torch.no_grad():
     for data in test_loader:
