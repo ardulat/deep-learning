@@ -309,6 +309,9 @@ total = 0
 net = Net()
 net.load_state_dict(torch.load('ConvNet.pt'))
 
+if torch.cuda.is_available():
+    net.cuda()
+
 with torch.no_grad():
     for data in test_loader:
         images, labels = data

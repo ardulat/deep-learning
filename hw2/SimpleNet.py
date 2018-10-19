@@ -24,25 +24,25 @@ import torch.optim as optim
 
 # In[3]:
 
+# define a label map
+labelmap = {
+            'airplane': 0,
+            'bird': 1,
+            'dog': 2,
+            'frog': 3,
+            'horse': 4,
+            'apple': 5,
+            'grape': 6,
+            'kiwi': 7,
+            'lemon': 8,
+            'strawberry': 9
+            }
+
 
 def read_images(dir_path):
     
     X = []
     y = []
-    
-    # define a label map
-    labelmap = {
-                'airplane': 0,
-                'bird': 1,
-                'dog': 2,
-                'frog': 3,
-                'horse': 4,
-                'apple': 5,
-                'grape': 6,
-                'kiwi': 7,
-                'lemon': 8,
-                'strawberry': 9
-               }
     
     directory_list = os.listdir(dir_path)
     # remove OS X's .DS_Store file
@@ -133,7 +133,7 @@ class CIFAR10(torch.utils.data.dataset.Dataset):
 
 train_dir_path1 = 'hw2 data/data1/train/'
 train_dir_path2 = 'hw2 data/data2/train/'
-batch_size = 64
+batch_size = 32
 
 transform = transforms.Compose(
     [transforms.ToTensor(),
@@ -186,21 +186,6 @@ class SimpleNet(nn.Module):
             nn.Conv2d(128, 128, kernel_size=3, padding=1),
             nn.BatchNorm2d(128),
             nn.PReLU(),
-            nn.Conv2d(128, 128, kernel_size=3, padding=1),
-            nn.BatchNorm2d(128),
-            nn.PReLU(),
-            
-            nn.MaxPool2d(kernel_size=2, stride=2),
-            
-            nn.Conv2d(128, 128, kernel_size=3, padding=1),
-            nn.BatchNorm2d(128),
-            nn.PReLU(),
-            nn.Conv2d(128, 128, kernel_size=3, padding=1),
-            nn.BatchNorm2d(128),
-            nn.PReLU(),
-            nn.Conv2d(128, 128, kernel_size=3, padding=1),
-            nn.BatchNorm2d(128),
-            nn.PReLU(),
             
             nn.MaxPool2d(kernel_size=2, stride=2),
             
@@ -212,10 +197,6 @@ class SimpleNet(nn.Module):
             nn.PReLU(),
             
             nn.MaxPool2d(kernel_size=2, stride=2),
-            
-            nn.Conv2d(128, 128, kernel_size=3, padding=1),
-            nn.BatchNorm2d(128),
-            nn.PReLU(),
             
             nn.Conv2d(128, 128, kernel_size=1, padding=1),
             nn.BatchNorm2d(128),
@@ -235,12 +216,12 @@ class SimpleNet(nn.Module):
         
         self.classifier = nn.Sequential(
             nn.Dropout(),
-            nn.Linear(1152, num_classes)
+            nn.Linear(2048, num_classes)
         )
 
     def forward(self, x):
         x = self.features(x)
-        x = x.view(x.size(0), 1152)
+        x = x.view(x.size(0), 2048)
         x = self.classifier(x)
         return x
     
@@ -337,6 +318,9 @@ total = 0
 net = SimpleNet()
 net.load_state_dict(torch.load('SimpleNet.pt'))
 
+if torch.cuda.is_available():
+    net.cuda()
+
 with torch.no_grad():
     for data in test_loader:
         images, labels = data
@@ -352,10 +336,32 @@ print('Accuracy of the network on the %d test images: %d %%' % (total,
     100 * correct / total))
 
 
-# In[ ]:
-
 plt.plot(list(range(epochs)), training_losses, label='training')
 plt.plot(list(range(epochs)), validation_losses, label='validation')
 plt.legend()
 plt.show()
+
+# Categorical loss
+
+class_correct = list(0. for i in range(10))
+class_total = list(0. for i in range(10))
+with torch.no_grad():
+    for data in test_loader:
+        images, labels = data
+        if torch.cuda.is_available():
+            images = images.cuda()
+            labels = labels.cuda()
+        outputs = net(images)
+        _, predicted = torch.max(outputs, 1)
+        c = (predicted == labels).squeeze()
+        for i in range(batch_size):
+            label = labels[i]
+            class_correct[label] += c[i].item()
+            class_total[label] += 1
+
+
+for i in range(10):
+    print('Accuracy of %5s : %2d %%' % (
+        labelmap[i], 100 * class_correct[i] / class_total[i]))
+
 

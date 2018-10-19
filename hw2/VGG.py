@@ -223,59 +223,59 @@ optimizer = optim.SGD(net.parameters(), lr=0.1, momentum=0.9)
 # In[ ]:
 
 
-epochs = 250
+# epochs = 250
 
-training_losses = []
-validation_losses = []
-correct = 0
-total = 0
+# training_losses = []
+# validation_losses = []
+# correct = 0
+# total = 0
 
-for epoch in range(epochs):  # loop over the dataset multiple times
+# for epoch in range(epochs):  # loop over the dataset multiple times
 
-    training_loss = 0.0
-    for i, data in enumerate(train_loader, 0):
-        inputs, labels = data
-        if torch.cuda.is_available():
-            inputs = inputs.cuda()
-            labels = labels.cuda()
+#     training_loss = 0.0
+#     for i, data in enumerate(train_loader, 0):
+#         inputs, labels = data
+#         if torch.cuda.is_available():
+#             inputs = inputs.cuda()
+#             labels = labels.cuda()
 
-        optimizer.zero_grad()
+#         optimizer.zero_grad()
 
-        outputs = net(inputs)
-        if torch.cuda.is_available():
-            outputs = outputs.cuda()
-        loss = criterion(outputs, labels)
-        loss.backward()
-        optimizer.step()
+#         outputs = net(inputs)
+#         if torch.cuda.is_available():
+#             outputs = outputs.cuda()
+#         loss = criterion(outputs, labels)
+#         loss.backward()
+#         optimizer.step()
 
-        training_loss += loss.item()
-    training_losses.append(training_loss)
+#         training_loss += loss.item()
+#     training_losses.append(training_loss)
         
-    validation_loss = 0.0
-    for i, data in enumerate(validation_loader, 0):
-        inputs, labels = data
-        if torch.cuda.is_available():
-            inputs = inputs.cuda()
-            labels = labels.cuda()
+#     validation_loss = 0.0
+#     for i, data in enumerate(validation_loader, 0):
+#         inputs, labels = data
+#         if torch.cuda.is_available():
+#             inputs = inputs.cuda()
+#             labels = labels.cuda()
         
-        outputs = net(inputs)
-        if torch.cuda.is_available():
-            outputs = outputs.cuda()
-        loss = criterion(outputs, labels)
-        _, predicted = torch.max(outputs.data, 1)
-        total += labels.size(0)
-        correct += (predicted == labels).sum().item()
+#         outputs = net(inputs)
+#         if torch.cuda.is_available():
+#             outputs = outputs.cuda()
+#         loss = criterion(outputs, labels)
+#         _, predicted = torch.max(outputs.data, 1)
+#         total += labels.size(0)
+#         correct += (predicted == labels).sum().item()
         
-        validation_loss += loss.item()
-    validation_losses.append(validation_loss)
+#         validation_loss += loss.item()
+#     validation_losses.append(validation_loss)
     
-    print('epoch %d/%d \t training loss: %.3f \t validation_loss: %.3f \t accuracy: %d%%' %
-              (epoch + 1, epochs, training_loss, validation_loss, 100 * correct / total))
+#     print('epoch %d/%d \t training loss: %.3f \t validation_loss: %.3f \t accuracy: %d%%' %
+#               (epoch + 1, epochs, training_loss, validation_loss, 100 * correct / total))
 
-print('Finished Training')
+# print('Finished Training')
 
-torch.save(net.state_dict(), 'VGGNet.pt')
-print("Saved model in VGGNet.pt")
+# torch.save(net.state_dict(), 'VGGNet.pt')
+# print("Saved model in VGGNet.pt")
 
 
 # In[ ]:
@@ -299,6 +299,9 @@ total = 0
 net = VGG()
 net.load_state_dict(torch.load('VGGNet.pt'))
 
+if torch.cuda.is_available():
+    net.cuda()
+
 
 with torch.no_grad():
     for data in test_loader:
@@ -320,8 +323,8 @@ print('Accuracy of the network on the %d test images: %d %%' % (total,
 # print(training_losses)
 # print(validation_losses)
 
-plt.plot(list(range(epochs)), training_losses, label='training')
-plt.plot(list(range(epochs)), validation_losses, label='validation')
-plt.legend()
-plt.show()
+# plt.plot(list(range(epochs)), training_losses, label='training')
+# plt.plot(list(range(epochs)), validation_losses, label='validation')
+# plt.legend()
+# plt.show()
 
