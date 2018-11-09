@@ -217,65 +217,93 @@ if torch.cuda.is_available():
 
 
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.SGD(net.parameters(), lr=0.1, momentum=0.9)
+optimizer = optim.Adam(net.parameters(), lr=0.001)
 
 
 # In[ ]:
 
 
-# epochs = 250
+epochs = 25
 
-# training_losses = []
-# validation_losses = []
-# correct = 0
-# total = 0
+training_losses = []
+validation_losses = []
+training_accuracy = []
+validation_accuracy = []
+training_correct = 0
+training_total = 0
+validation_correct = 0
+validation_total = 0
 
-# for epoch in range(epochs):  # loop over the dataset multiple times
+for epoch in range(epochs):  # loop over the dataset multiple times
 
-#     training_loss = 0.0
-#     for i, data in enumerate(train_loader, 0):
-#         inputs, labels = data
-#         if torch.cuda.is_available():
-#             inputs = inputs.cuda()
-#             labels = labels.cuda()
+    training_loss = 0.0
+    for i, data in enumerate(train_loader, 0):
+        inputs, labels = data
+        if torch.cuda.is_available():
+            inputs = inputs.cuda()
+            labels = labels.cuda()
 
-#         optimizer.zero_grad()
+        optimizer.zero_grad()
 
-#         outputs = net(inputs)
-#         if torch.cuda.is_available():
-#             outputs = outputs.cuda()
-#         loss = criterion(outputs, labels)
-#         loss.backward()
-#         optimizer.step()
+        outputs = net(inputs)
+        if torch.cuda.is_available():
+            outputs = outputs.cuda()
+        loss = criterion(outputs, labels)
+        loss.backward()
+        optimizer.step()
 
-#         training_loss += loss.item()
-#     training_losses.append(training_loss)
-        
-#     validation_loss = 0.0
-#     for i, data in enumerate(validation_loader, 0):
-#         inputs, labels = data
-#         if torch.cuda.is_available():
-#             inputs = inputs.cuda()
-#             labels = labels.cuda()
-        
-#         outputs = net(inputs)
-#         if torch.cuda.is_available():
-#             outputs = outputs.cuda()
-#         loss = criterion(outputs, labels)
-#         _, predicted = torch.max(outputs.data, 1)
-#         total += labels.size(0)
-#         correct += (predicted == labels).sum().item()
-        
-#         validation_loss += loss.item()
-#     validation_losses.append(validation_loss)
+        _, predicted = torch.max(outputs.data, 1)
+        training_total += labels.size(0)
+        training_correct += (predicted == labels).sum().item()
+
+        training_loss += loss.item()
+    training_losses.append(training_loss)
+
     
-#     print('epoch %d/%d \t training loss: %.3f \t validation_loss: %.3f \t accuracy: %d%%' %
-#               (epoch + 1, epochs, training_loss, validation_loss, 100 * correct / total))
+        
+    validation_loss = 0.0
+    for i, data in enumerate(validation_loader, 0):
+        inputs, labels = data
+        if torch.cuda.is_available():
+            inputs = inputs.cuda()
+            labels = labels.cuda()
+        
+        outputs = net(inputs)
+        if torch.cuda.is_available():
+            outputs = outputs.cuda()
+        loss = criterion(outputs, labels)
+        _, predicted = torch.max(outputs.data, 1)
+        validation_total += labels.size(0)
+        validation_correct += (predicted == labels).sum().item()
+        
+        validation_loss += loss.item()
+    validation_losses.append(validation_loss)
+    
+    print('epoch %d/%d \t training loss: %.3f \t training_accuracy: %d%% validation_loss: %.3f \t validation_accuracy: %d%%' %
+              (epoch + 1, epochs, training_loss, 100 * training_correct / training_total, validation_loss, 100 * validation_correct / validation_total))
 
-# print('Finished Training')
+    training_accuracy.append(100 * training_correct / training_total)
+    validation_accuracy.append(100 * validation_correct / validation_total)
 
-# torch.save(net.state_dict(), 'VGGNet.pt')
-# print("Saved model in VGGNet.pt")
+print('Finished Training')
+
+torch.save(net.state_dict(), 'VGGNet.pt')
+print("Saved model in VGGNet.pt")
+
+
+# In[ ]:
+
+plt.plot(list(range(epochs)), training_losses, label='training')
+plt.plot(list(range(epochs)), validation_losses, label='validation')
+plt.title("Loss")
+plt.legend()
+plt.show()
+
+plt.plot(list(range(epochs)), training_accuracy, label='training')
+plt.plot(list(range(epochs)), validation_accuracy, label='validation')
+plt.title("Accuracy")
+plt.legend()
+plt.show()
 
 
 # In[ ]:
@@ -317,14 +345,4 @@ with torch.no_grad():
 print('Accuracy of the network on the %d test images: %d %%' % (total,
     100 * correct / total))
 
-
-# In[ ]:
-
-# print(training_losses)
-# print(validation_losses)
-
-# plt.plot(list(range(epochs)), training_losses, label='training')
-# plt.plot(list(range(epochs)), validation_losses, label='validation')
-# plt.legend()
-# plt.show()
 
